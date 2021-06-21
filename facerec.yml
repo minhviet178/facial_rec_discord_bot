@@ -1,0 +1,30 @@
+name: final_project_env
+channels:
+  - conda-forge
+dependencies:
+  - ipython
+  - tensorboard
+  - astunparse
+  - typing_extensions
+  - pip=20.2.4
+  - grpcio
+  - scipy
+  - numpy
+  - gast
+  - absl-py
+  - h5py==2.10.0
+  - python=3.8
+  - wrapt
+  - opt_einsum
+  - google-pasta
+  - keras-preprocessing
+  - wheel
+  - typeguard
+  - python-flatbuffers
+  - tensorflow-estimator
+  - protobuf
+  - termcolor
+  - opencv
+  - scikit-learn
+  - ipykernel
+prefix: /opt/homebrew/Caskroom/miniforge/base/envs/final_project_env
