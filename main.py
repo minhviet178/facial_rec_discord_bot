@@ -7,11 +7,18 @@ from statistics import mode, mean
 import threading
 from utils import *
 from facenet_architecture import *
+from collections import Counter
+import discord 
+import requests
+import json
+import random
+from dotenv import load_dotenv
+from threading import Thread
+import re
+from datetime import datetime
+import pandas as pd 
 
-################################################################################
-#######################        GLOBAL SETTINGS        ##########################
-################################################################################
-
+# def facerec_model():
 WEIGHT = 'yolo/yolov3-wider_16000.weights'
 MODEL = 'yolo/yolov3-face.cfg'
 
@@ -29,11 +36,11 @@ RED  = (0,0,255)
 model_facenet = InceptionResNetV1()
 
 # KNN
-K_UNKNOWN_THRESHOLD = 7 # Tried 5, 9
-K_NB = 10 # tried 1, 2, 3, 5, 8, 10, 15
-# Didn't work:        1,2,3,9,11
-# Worked fine:        10
-# Worked best so far: 10
+K_UNKNOWN_THRESHOLD = 8 # Tried 5, 9
+K_NB = 11 # tried 1, 2, 3, 5, 8, 10, 11, 15
+# Didn't work:        1,2,3,9
+# Worked fine:        10, 11
+# Worked best so far: 11
 MODEL_NAME = 'holy_KNN.h5'
 
 # Init
@@ -73,7 +80,6 @@ def detect_and_predict(net, frame, IMG_SIZE, predict_mode, model_facenet):
             text = KNN_predict(knn_model, face_emb_array, trainy, out_encoder, K_UNKNOWN_THRESHOLD)
         else:
             text = f'{confidences[i]:.2f}'
-
         # BUFFER
         text_buffer.append(text)
 
@@ -115,16 +121,19 @@ else:
 ################################################################################
 
 cap = cv2.VideoCapture(0)
+iteration = 0
+prediction = []
+attendance = {}
 
 while cap.isOpened():
     ret, frame = cap.read()
     frame = cv2.flip(frame, 1)
-
     if thread_finished == True:
         # Save result
         boxes_cache = boxes_buffer.copy()
         text_cache  = text_buffer.copy()
-        x = threading.Thread(target=detect_and_predict, args=(net, frame, IMG_SIZE, predict_mode, model_facenet,)).start()  
+        x = threading.Thread(target=detect_and_predict, args=(net, frame, IMG_SIZE, predict_mode, model_facenet,)).start()
+
 
     # Draw
     for i, box in enumerate(boxes_cache):
@@ -134,7 +143,30 @@ while cap.isOpened():
         bottomright   = (x+w+margin_x, y+h+margin_y)
         cv2.rectangle(frame, topleft, bottomright, BLUE, 2)
         cv2.putText(frame, text_cache[i], topleft, cv2.FONT_HERSHEY_SIMPLEX, 1, RED, 2)
-    
+        iteration += 1
+        if iteration % 7 == 0:
+            prediction.append(text_cache[i])
+            # print(prediction[i - 1])
+        try:
+            if prediction[i - 1] == prediction[i - 2] == prediction[i - 3] == prediction[i - 4]:
+                if len(prediction) == 4:
+                    print('Prediction = ', prediction)
+                    y_true = re.search(r'[A-Za-z\s]+',prediction[0]).group()
+                    print('y_true = ', y_true)  
+                    cur_time = datetime.now()
+                    if f'{y_true}' not in attendance.keys():
+                        attendance[f'{y_true}'] = [cur_time.strftime('%X'), cur_time.strftime("%x")]
+                        print('Attendance = ', attendance)
+                        with open("student.json", "w") as write_file:
+                            json.dump(attendance, write_file, indent=4)
+
+                    
+                      
+                prediction.clear()
+        except:
+            pass
+
+
     cv2.imshow('face detection', frame)
 
     # Wait for key press
@@ -152,3 +184,4 @@ while cap.isOpened():
 print("Camera closed!")
 cap.release()
 cv2.destroyAllWindows()
+
