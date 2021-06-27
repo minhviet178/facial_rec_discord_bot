@@ -7,6 +7,7 @@ A virtual teaching assistant discord bot
 2. How to train and predict with the model
 - Run main.py 
 3. How to run the bot
+- Create your own .env file with your discord bot id and server name.
 - Run obok.py
 4. How to run streamlit 
 - Create a Submitted_Video folder, this is for the streamlit users to upload their videos
